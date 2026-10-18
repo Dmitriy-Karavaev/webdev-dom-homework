@@ -70,9 +70,23 @@ body {
   }
 
   .like-button {
-    all: unset;
+     background: none;
+    border: none;
     cursor: pointer;
+    padding: 0;
+    margin: 0;
+    all: unset;    
   }
+
+  .like-button .icon-heart {
+    color: #ccc;
+    font-size: 18px;
+    line-height: 1;
+  }
+
+  .like-button.liked .icon-heart {
+  color: #ff4d4d;
+}
 
   .likes-counter {
     font-size: 26px;
@@ -135,3 +149,5 @@ body {
   .add-form-button:hover {
     opacity: 0.9;
   }
+
+  

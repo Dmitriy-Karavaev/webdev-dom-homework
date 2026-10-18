@@ -9,45 +9,11 @@
 
 <body>
   <div class="container">
-    <ul class="comments">
-      <li class="comment">
-        <div class="comment-header">
-          <div>Глеб Фокин</div>
-          <div>12.02.22 12:18</div>
-        </div>
-        <div class="comment-body">
-          <div class="comment-text">
-            Это будет первый комментарий на этой странице
-          </div>
-        </div>
-        <div class="comment-footer">
-          <div class="likes">
-            <span class="likes-counter">3</span>
-            <button class="like-button"></button>
-          </div>
-        </div>
-      </li>
-      <li class="comment">
-        <div class="comment-header">
-          <div>Варвара Н.</div>
-          <div>13.02.22 19:22</div>
-        </div>
-        <div class="comment-body">
-          <div class="comment-text">
-            Мне нравится как оформлена эта страница! ❤
-          </div>
-        </div>
-        <div class="comment-footer">
-          <div class="likes">
-            <span class="likes-counter">75</span>
-            <button class="like-button -active-like"></button>
-          </div>
-        </div>
-      </li>
-    </ul>
+    <ul class="comments"></ul>
+
     <div class="add-form">
       <input type="text" class="add-form-name" placeholder="Введите ваше имя" />
-      <textarea type="textarea" class="add-form-text" placeholder="Введите ваш коментарий" rows="4"></textarea>
+      <textarea class="add-form-text" placeholder="Введите ваш комментарий" rows="4"></textarea>
       <div class="add-form-row">
         <button class="add-form-button">Написать</button>
       </div>
@@ -58,15 +24,103 @@
 <script>
   "use strict";
 
+  // 1. ДАННЫЕ
+  const commentsData = [
+    {
+      id: 1,
+      name: "Алексей",
+      text: "Отличная статья, спасибо!",
+      date: "10.10.2023 14:30",
+      likesCount: 5,
+      isLiked: false
+    },
+    {
+      id: 2,
+      name: "Мария",
+      text: "Не очень понятно про второй пункт.",
+      date: "10.10.2023 15:15",
+      likesCount: 2,
+      isLiked: true
+    }
+  ];
+
+  // 2. ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
+  function escapeHtml(str) {
+    return str
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
+  // 3. ФУНКЦИЯ ОТРИСОВКИ
+  function renderComments() {
+    const commentsList = document.querySelector(".comments");
+    if (!commentsList) return;
+
+    commentsList.innerHTML = "";
+
+    commentsData.forEach(comment => {
+      const heartClass = comment.isLiked ? "liked" : "";
+
+      const li = document.createElement("li");
+      li.className = "comment";
+
+      li.innerHTML = `
+      <div class="comment-header">
+        <div>${escapeHtml(comment.name)}</div>
+        <div>${comment.date}</div>
+      </div>
+      <div class="comment-body">
+        <div class="comment-text">
+          ${escapeHtml(comment.text)}
+        </div>
+      </div>
+      <div class="comment-footer">
+        <div class="likes">
+          <!-- data-id нужен, чтобы найти комментарий в массиве -->
+          <button class="like-button ${heartClass}" data-id="${comment.id}">
+            <!-- Добавил эмодзи ♡ как контент, чтобы точно было видно сердечко -->
+            <span class="icon-heart">♡</span>
+          </button>
+          <span class="likes-counter">${comment.likesCount}</span>
+        </div>
+      </div>
+    `;
+
+      commentsList.appendChild(li);
+    });
+  }
+
+  // 4. ОБРАБОТЧИК ЛАЙКОВ (делегирование событий)
+  document.querySelector(".comments").addEventListener("click", (event) => {
+    const target = event.target.closest(".like-button");
+
+    if (!target) return; // Клик был не по кнопке
+
+    const commentId = parseInt(target.dataset.id, 10);
+    const comment = commentsData.find(c => c.id === commentId);
+
+    if (!comment) return;
+
+    // Меняем данные В МАССИВЕ
+    if (comment.isLiked) {
+      comment.isLiked = false;
+      comment.likesCount--;
+    } else {
+      comment.isLiked = true;
+      comment.likesCount++;
+    }
+
+    // Перерисовываем список
+    renderComments();
+  });
+
+  // 5. ОБРАБОТЧИК КНОПКИ "НАПИСАТЬ"
   const nameInput = document.querySelector(".add-form-name");
   const commentInput = document.querySelector(".add-form-text");
   const addBtn = document.querySelector(".add-form-button");
-  const commentsList = document.querySelector(".comments");
-
-  let commentContainer = commentsList;
-
-  nameInput.addEventListener("input", () => { });
-  commentInput.addEventListener("input", () => { });
 
   addBtn.addEventListener("click", () => {
     const name = nameInput.value.trim();
@@ -86,40 +140,25 @@
 
     const dateString = `${day}.${month}.${year} ${hours}:${minutes}`;
 
-    const newCommentHTML = `
-      <li class="comment">
-        <div class="comment-header">
-          <div>${escapeHtml(name)}</div>
-          <div>${dateString}</div>
-        </div>
-        <div class="comment-body">
-          <div class="comment-text">
-            ${escapeHtml(text)}
-          </div>
-        </div>
-        <div class="comment-footer">
-          <div class="likes">
-            <span class="likes-counter">0</span>
-            <button class="like-button"></button>
-          </div>
-        </div>
-      </li>
-    `;
+    const newComment = {
+      id: Date.now(),
+      name: name,
+      text: text,
+      date: dateString,
+      likesCount: 0,
+      isLiked: false
+    };
 
-    commentContainer.innerHTML += newCommentHTML;
+    commentsData.unshift(newComment);
 
     nameInput.value = "";
     commentInput.value = "";
+
+    renderComments(); // Обновляем список
   });
 
-  function escapeHtml(str) {
-    return str
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#039;");
-  }
+  // 6. ЗАПУСК ПРИ ЗАГРУЗКЕ
+  renderComments();
 </script>
 
 </html>
