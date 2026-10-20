@@ -33,7 +33,7 @@
       text: "Отличная статья, спасибо!",
       date: "10.10.2023 14:30",
       likesCount: 5,
-      isLiked: false
+      isLiked: false,
       parentId: null
     },
     {
@@ -42,7 +42,7 @@
       text: "Не очень понятно про второй пункт.",
       date: "10.10.2023 15:15",
       likesCount: 2,
-      isLiked: true
+      isLiked: true,
       parentId: null
     }
   ];
@@ -91,10 +91,7 @@
         </div>
         <div class="comment-footer">
           <div class="likes">
-            <!-- Клик по этой кнопке НЕ должен вызывать ответ -->
-            <button class="like-button ${heartClass}" data-id="${comment.id}">
-              <span class="icon-heart">♡</span>
-            </button>
+            <button class="like-button ${activeClass}" data-id="${comment.id}"></button>
             <span class="likes-counter">${comment.likesCount}</span>
           </div>
         </div>
