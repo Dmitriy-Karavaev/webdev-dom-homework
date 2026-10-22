@@ -7,7 +7,7 @@ export function renderComments(selector, data) {
   commentsList.innerHTML = '';
 
   data.forEach((comment) => {
-    const activeClass = comment.isLiked ? '-active-like' : '';
+    const activeClass = comment.isLiked ? 'liked' : '';
 
     const li = document.createElement('li');
     li.className = 'comment';

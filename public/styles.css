@@ -84,8 +84,8 @@ body {
     line-height: 1;
   }
 
-  .like-button.liked .icon-heart {
-  color: #ff4d4d;
+  .like-button.liked {
+  filter: drop-shadow(0 0 4px #ff4d4d);
 }
 
   .likes-counter {
