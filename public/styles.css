@@ -67,6 +67,7 @@ body {
   .likes {
     display: flex;
     align-items: center;
+    gap: 12px;
   }
 
   .like-button {
