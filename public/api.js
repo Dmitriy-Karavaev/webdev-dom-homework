@@ -1,79 +1,45 @@
-const PERSONAL_KEY = 'yourname-yourlastname'; 
-const API_URL = `https://wedev-api.sky.pro/api/v1/${PERSONAL_KEY}/comments`;
-
-// Кэширование запросов для предотвращения множественных обращений
-let commentsCache = null;
-let isFetching = false;
-
-export async function fetchComments() {
-    // Проверяем, есть ли данные в кэше
-    if (commentsCache && !isFetching) {
-        return commentsCache;
+export function loadComments() {
+  return fetch('https://webdev-hw-api.vercel.app/api/comments', {
+    method: 'GET',
+    headers: {
+      'Accept': 'application/json'
     }
-
-    if (isFetching) {
-        return new Promise((resolve) => {
-            const waitForFetch = setInterval(() => {
-                if (!isFetching) {
-                    clearInterval(waitForFetch);
-                    resolve(commentsCache);
-                }
-            }, 100);
-        });
-    }
-
-    isFetching = true;
-    
-    try {
-        const response = await fetch(API_URL);
-        
-        if (!response.ok) {
-            throw new Error('Ошибка при получении комментариев');
-        }
-        
-        const data = await response.json();
-        
-        commentsCache = data.comments.map(comment => ({
-            id: comment.id,
-            name: comment.author?.name || '',
-            text: comment.text || '',
-            date: comment.date || '',
-            likes: comment.likes || 0,
-            isLiked: comment.isLiked || false,
-            parentId: null
-        }));
-        
-        isFetching = false;
-        return commentsCache;
-    } catch (error) {
-        console.error('Ошибка получения комментариев:', error);
-        isFetching = false;
-        return [];
-    }
+  })
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error(`Ошибка сети: ${response.status} ${response.statusText}`);
+      }
+      return response.json();
+    })
+    .then((data) => {
+      if (!data || !Array.isArray(data.comments)) {
+        throw new Error('Неверный формат данных от сервера');
+      }
+      return data.comments;
+    });
 }
 
-export async function addComment(newComment) {
-    try {
-        const response = await fetch(API_URL, {
-            method: 'POST',
-            // Убираем заголовок Content-Type
-            body: JSON.stringify({
-                text: newComment.text,
-                name: newComment.name
-            })
-        });
-        
-        if (!response.ok) {
-            const errorData = await response.json();
-            console.error('Ошибка от сервера:', errorData);
-            throw new Error(errorData.error || 'Ошибка при добавлении комментария');
-        }
-        
-        // Обновляем кэш после добавления
-        commentsCache = null;
-        return await response.json();
-    } catch (error) {
-        console.error('Ошибка добавления комментария:', error);
-        return null;
-    }
+export function delay(interval = 300) {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve();
+    }, interval);
+  });
+}
+
+export function addComment(commentData) {
+  return fetch('https://webdev-hw-api.vercel.app/api/comments', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    },
+    body: JSON.stringify(commentData)
+  })
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error('Не удалось добавить комментарий');
+      }
+      return response.json();
+    });
 }

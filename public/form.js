@@ -1,5 +1,5 @@
 
-import { addComment, fetchComments } from './api.js';
+import { addComment } from './api.js';
 import { renderComments } from './render.js';
 
 // Функция для показа индикатора загрузки
@@ -23,43 +23,34 @@ async function updateComments() {
 }
 
 export function initForm() {
-  const nameInput = document.querySelector('.add-form-name');
-  const commentInput = document.querySelector('.add-form-text');
-  const submitBtn = document.querySelector('.add-form-button');
+  const form = document.querySelector('.comment-form');
+  
+  if (!form) return;
 
-  if (!nameInput || !commentInput || !submitBtn) {
-    console.warn('⚠️ Элементы формы не найдены');
-    return;
-  }
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
 
-  // Обработчик отправки формы
-  submitBtn.addEventListener('click', async (e) => {
-    e.preventDefault();
-    submitBtn.disabled = true;
-    showLoading();
+    const name = form.querySelector('[name="name"]').value.trim();
+    const text = form.querySelector('[name="text"]').value.trim();
+
+    if (!name || !text) {
+      alert('Пожалуйста, заполните все поля');
+      return;
+    }
 
     try {
-      const name = nameInput.value.trim();
-      const text = commentInput.value.trim();
+      const commentData = {
+        name, text 
+    };
 
-      if (!name || !text) {
-        alert('Заполните все поля');
-        submitBtn.disabled = false;
-        hideLoading();
-        return;
-      }
+      const response = await addComment(commentData);
+      form.reset();
 
-      await addComment({ name, text });
-      await updateComments();
-      
-      nameInput.value = '';
-      commentInput.value = '';
-    } catch (error) {
-      console.error('Ошибка при добавлении комментария:', error);
-      alert('Не удалось добавить комментарий. Попробуйте позже.');
-    } finally {
-      submitBtn.disabled = false;
-      hideLoading();
+    } 
+    
+    catch (error) {
+      console.error('Ошибка при отправке комментария:', error);
+      alert('Не удалось отправить комментарий. Попробуйте позже.');
     }
   });
 }

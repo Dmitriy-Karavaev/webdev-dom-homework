@@ -21,7 +21,7 @@ body {
     list-style: none;
   }
 
-  .comment,
+   .comment,
   .add-form {
     width: 596px;
     box-sizing: border-box;
@@ -63,55 +63,63 @@ body {
   .comment-text {
     font-size: 32px;
   }
-
-  .likes {
+  /* Контейнер для пары «цифра + сердце» */
+  .comment-actions {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 12px; /* Расстояние между цифрой и сердцем */
   }
-
+  /* Кнопка-сердце (просто иконка, без фона) */
   .like-button {
-     background: none;
-    border: none;
-    cursor: pointer;
-    padding: 0;
-    margin: 0;
-    all: unset;    
-  }
-
-  .like-button .icon-heart {
-    color: #ccc;
-    font-size: 18px;
-    line-height: 1;
-  }
-
-  .like-button.liked {
-  filter: drop-shadow(0 0 4px #ff4d4d);
+  all: unset; 
+  cursor: pointer;
+  width: 22px;
+  height: 22px;
+  background-image: url("data:image/svg+xml,%3Csvg width='22' height='20' viewBox='0 0 22 20' fill='none' xmlns='http://www.w3.org/2000/svg' %3E%3Cpath d='M11.11 16.9482L11 17.0572L10.879 16.9482C5.654 12.2507 2.2 9.14441 2.2 5.99455C2.2 3.81471 3.85 2.17984 6.05 2.17984C7.744 2.17984 9.394 3.26975 9.977 4.75204H12.023C12.606 3.26975 14.256 2.17984 15.95 2.17984C18.15 2.17984 19.8 3.81471 19.8 5.99455C19.8 9.14441 16.346 12.2507 11.11 16.9482ZM15.95 0C14.036 0 12.199 0.882834 11 2.26703C9.801 0.882834 7.964 0 6.05 0C2.662 0 0 2.6267 0 5.99455C0 10.1035 3.74 13.4714 9.405 18.5613L11 20L12.595 18.5613C18.26 13.4714 22 10.1035 22 5.99455C22 2.6267 19.338 0 15.95 0Z' fill='%23BCEC30' /%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain; /* Чтобы SVG точно влез в 22x22px */
+  margin-left: 10px;
 }
-
-  .likes-counter {
+  /* Эффект при наведении */
+  .like-button:hover {
+    color: #ffffff; /* Сердце становится белым */
+    filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.4));
+  }
+  /* Состояние «лайк поставлен» */
+  .like-button.liked {
+    color: #FFD700;
+    filter: drop-shadow(0 0 4px rgba(255, 215, 0, 0.5));
+  }
+  /* Счётчик лайков (цифра) */
+  .like-count {
     font-size: 26px;
+    font-weight: 600;
+    color: #ffffff; 
+    min-width: 24px; /* Чтобы цифра не «прыгала» при изменении (1 → 10) */
+    text-align: center;
     margin-right: 8px;
   }
 
-  .like-button {
-    margin-left: 10px;
-    background-image: url("data:image/svg+xml,%3Csvg width='22' height='20' viewBox='0 0 22 20' fill='none' xmlns='http://www.w3.org/2000/svg' %3E%3Cpath d='M11.11 16.9482L11 17.0572L10.879 16.9482C5.654 12.2507 2.2 9.14441 2.2 5.99455C2.2 3.81471 3.85 2.17984 6.05 2.17984C7.744 2.17984 9.394 3.26975 9.977 4.75204H12.023C12.606 3.26975 14.256 2.17984 15.95 2.17984C18.15 2.17984 19.8 3.81471 19.8 5.99455C19.8 9.14441 16.346 12.2507 11.11 16.9482ZM15.95 0C14.036 0 12.199 0.882834 11 2.26703C9.801 0.882834 7.964 0 6.05 0C2.662 0 0 2.6267 0 5.99455C0 10.1035 3.74 13.4714 9.405 18.5613L11 20L12.595 18.5613C18.26 13.4714 22 10.1035 22 5.99455C22 2.6267 19.338 0 15.95 0Z' fill='%23BCEC30' /%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    width: 22px;
-    height: 22px;
-  }
-
-  .like-button::before {
-  background-image: url("data:image/svg+xml,%3Csvg width='22' height='20' viewBox='0 0 22 20' fill='none' xmlns='http://www.w3.org/2000/svg' %3E%3Cpath d='M11.11 16.9482L11 17.0572L10.879 16.9482C5.654 12.2507 2.2 9.14441 2.2 5.99455C2.2 3.81471 3.85 2.17984 6.05 2.17984C7.744 2.17984 9.394 3.26975 9.977 4.75204H12.023C12.606 3.26975 14.256 2.17984 15.95 2.17984C18.15 2.17984 19.8 3.81471 19.8 5.99455C19.8 9.14441 16.346 12.2507 11.11 16.9482ZM15.95 0C14.036 0 12.199 0.882834 11 2.26703C9.801 0.882834 7.964 0 6.05 0C2.662 0 0 2.6267 0 5.99455C0 10.1035 3.74 13.4714 9.405 18.5613L11 20L12.595 18.5613C18.26 13.4714 22 10.1035 22 5.99455C22 2.6267 19.338 0 15.95 0Z' fill='%23BCEC30' /%3E%3C/svg%3E");
-  display: block;
-  width: 100%;
-  height: 100%;
-  background-color: transparent;
-}
-
   .-active-like {
     background-image: url("data:image/svg+xml,%3Csvg width='22' height='20' viewBox='0 0 22 20' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M15.95 0C14.036 0 12.199 0.882834 11 2.26703C9.801 0.882834 7.964 0 6.05 0C2.662 0 0 2.6267 0 5.99455C0 10.1035 3.74 13.4714 9.405 18.5613L11 20L12.595 18.5613C18.26 13.4714 22 10.1035 22 5.99455C22 2.6267 19.338 0 15.95 0Z' fill='%23BCEC30'/%3E%3C/svg%3E");
+  }
+
+  .like-button.active-like {
+  background-image: url("data:image/svg+xml,%3Csvg width='22' height='20' viewBox='0 0 22 20' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M15.95 0C14.036 0 12.199 0.882834 11 2.26703C9.801 0.882834 7.964 0 6.05 0C2.662 0 0 2.6267 0 5.99455C0 10.1035 3.74 13.4714 9.405 18.5613L11 20L12.595 18.5613C18.26 13.4714 22 10.1035 22 5.99455C22 2.6267 19.338 0 15.95 0Z' fill='%23BCEC30'/%3E%3C/svg%3E");
+  }
+
+  .like-button.loading-like {
+    animation: rotating 0.5s linear infinite;
+    cursor: wait;
+    opacity: 0.7;
+  }
+
+  @keyframes rotating {
+    from { transform: rotate(0deg); }
+    25% { transform: rotate(30deg); }
+    75% { transform: rotate(-30deg); }
+    to { transform: rotate(0deg); }
   }
 
   .add-form {
