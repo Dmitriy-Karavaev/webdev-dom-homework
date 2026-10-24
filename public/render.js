@@ -12,12 +12,25 @@ export function renderComments(selector, data) {
     li.className = 'comment';
     li.dataset.id = comment.id;
 
-    // ... остальной код создания заголовка и тела комментария ...
+    //заголовок комментария
+    const header = document.createElement('div');
+    header.className = 'comment-header';
+
+    const authorName = typeof comment.author === 'object' 
+      ? (comment.author.name || comment.author.id) 
+      : comment.author;
+
+header.textContent = authorName || 'Анонимный пользователь';
+
+    //тело комментария
+    const body = document.createElement('div');
+    body.className = 'comment-body';
+    body.textContent = comment.text || 'Нет текста';
 
     const footer = document.createElement('div');
     footer.className = 'comment-footer';
     
-    // Блок с лайками
+    //Блок с лайками
     const likesBlock = document.createElement('div');
     likesBlock.className = 'likes';
     
@@ -27,22 +40,17 @@ export function renderComments(selector, data) {
     likeBtn.dataset.id = comment.id;
     likeBtn.dataset.liked = comment.isLiked ? 'true' : 'false';
 
-    // обработчик клика
+    //обработчик клика
     likeBtn.addEventListener('click', () => {
-      // Проверяем, не крутится ли уже анимация
       if (likeBtn.classList.contains('loading-like')) return;
 
-      // анимациz
       likeBtn.classList.add('loading-like');
 
-      // Имитируем запрос к серверу
-      delay(1000) // задержка 1 секунда
+      delay(1000)
         .then(() => {
-          // Меняем состояние лайка
           comment.isLiked = !comment.isLiked;
           comment.likes = comment.isLiked ? comment.likes + 1 : comment.likes - 1;
 
-          // Обновляем классы и данные
           if (comment.isLiked) {
             likeBtn.classList.add('active-like');
             likeBtn.dataset.liked = 'true';
@@ -51,14 +59,12 @@ export function renderComments(selector, data) {
             likeBtn.dataset.liked = 'false';
           }
 
-          // Обновляем счетчик лайков
           const likeCount = likeBtn.previousElementSibling;
           if (likeCount) {
             likeCount.textContent = comment.likes;
           }
         })
         .finally(() => {
-          // Убираем анимацию загрузки
           likeBtn.classList.remove('loading-like');
         });
     });
@@ -72,9 +78,9 @@ export function renderComments(selector, data) {
     likesBlock.appendChild(likeBtn);
     footer.appendChild(likesBlock);
 
-    li.appendChild(header);
-    li.appendChild(body);
-    li.appendChild(footer);
+    li.appendChild(header);    // добавляем заголовок
+    li.appendChild(body);      // добавляем тело
+    li.appendChild(footer);    // добавляем футер
     fragment.appendChild(li);
   });
 

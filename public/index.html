@@ -9,14 +9,13 @@
     <div class="container">
       <ul class="comments"></ul>
 
-      <div class="add-form">
-        <input type="text" class="add-form-name" placeholder="Введите ваше имя" />
-        <textarea class="add-form-text" placeholder="Введите ваш комментарий" rows="4"></textarea>
+      <form class="add-form">
+        <input type="text" id="name" name="name" placeholder="Введите ваше имя" autocomplete="name" >
+        <textarea name="text" class="add-form-text" placeholder="Введите ваш комментарий" rows="4" required></textarea>
         <div class="add-form-row">
           <button class="add-form-button">Написать</button>
-          <button type="button" class="cancel-reply-button" style="display:none;">Отмена ответа</button>
         </div>        
-      </div>
+      </form>
     </div>
 
     <div class="loading" style="display:none;">

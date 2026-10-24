@@ -6,7 +6,6 @@ async function initApp() {
   const commentsList = document.querySelector('.comments');
   const loadingBlock = document.querySelector('.loading');
 
-  // 1. Показываем лоадер перед запросом
   if (loadingBlock) {
     loadingBlock.style.display = 'block';
   }
@@ -19,7 +18,6 @@ async function initApp() {
     }
     
     initForm();
-
   } catch (error) {
     console.error('Ошибка при загрузке комментариев:', error);
     
@@ -39,4 +37,6 @@ async function initApp() {
   }
 }
 
-document.addEventListener('DOMContentLoaded', initApp);
+document.addEventListener('DOMContentLoaded', () => {
+  initApp();
+});
