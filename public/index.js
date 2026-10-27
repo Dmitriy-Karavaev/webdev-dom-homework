@@ -21,37 +21,54 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function renderComment(comment) {
-    const li = document.createElement('li');
-    li.className = 'comment';
-    
-    const commentText = comment.text || comment.body || '';
-    const commentName = (comment.author && comment.author.name) || 'Аноним';
-    const dateStr = new Date(comment.date || Date.now()).toLocaleString();
-    
-    li.innerHTML = `
-      <div class="comment-header">
-        <span>${escapeHtml(commentName)}</span>
-        <span>${dateStr}</span>
+  const li = document.createElement('li');
+  li.className = 'comment';
+
+  const commentName = (comment.name && comment.name.trim() !== '')
+    ? comment.name
+    : (comment.author && comment.author.name && comment.author.name.trim() !== '')
+      ? comment.author.name
+      : 'Аноним';
+
+  const commentText = (comment.text && comment.text.trim() !== '')
+    ? comment.text
+    : (comment.body && comment.body.trim() !== '')
+      ? comment.body
+      : '';
+
+  const dateStr = new Date(comment.date || Date.now()).toLocaleString();
+
+  li.innerHTML = `
+    <div class="comment-header">
+      <span>${escapeHtml(commentName)}</span>
+      <span>${dateStr}</span>
+    </div>
+    <div class="comment-body">
+      <div class="comment-text">${escapeHtml(commentText)}</div>
+    </div>
+    <div class="comment-footer">
+      <div class="likes">
+        <span class="likes-counter">0</span>
+        <button type="button" class="like-button" aria-label="Лайк"></button>
       </div>
-      <div class="comment-body">
-        <div class="comment-text">${escapeHtml(commentText)}</div>
-      </div>
-      <div class="comment-footer">
-        <div class="likes">
-          <span class="likes-counter">0</span>
-          <button type="button" class="like-button" aria-label="Лайк"></button>
-        </div>
-      </div>
-    `;
-    li.dataset.commentId = comment.id;
-    commentsList.appendChild(li);
-  }
+    </div>
+  `;
+  li.dataset.commentId = comment.id;
+  commentsList.appendChild(li);
+}
 
   async function loadComments() {
     commentsList.innerHTML = '<li style="color:#aaa; text-align:center; padding:20px;">Загрузка...</li>';
     try {
       const response = await fetch(API_URL);
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      if (!response.ok) {
+        if (response.status === 500) {
+          alert('Сервер не отвечает, попробуй позже');
+        } else if (response.status === 400) {
+          alert('Некорректный запрос к API');
+        }
+        throw new Error(`HTTP ${response.status}`);
+      }
       
       const data = await response.json();
       let comments = '';
@@ -63,10 +80,59 @@ document.addEventListener('DOMContentLoaded', () => {
       commentsList.innerHTML = '';
       comments.forEach(renderComment);
     } catch (err) {
-      console.error(err);
-      commentsList.innerHTML = '<li style="color:red; text-align:center; padding:20px;">Ошибка загрузки</li>';
+      if (err instanceof TypeError) {
+        alert('Кажется, у вас отсутствует интернет, попробуйте позже');
+      } else {
+        console.error(err);
+        commentsList.innerHTML = '<li style="color:red; text-align:center; padding:20px;">Ошибка загрузки</li>';
+      }
     }
   }
+
+  const MAX_RETRIES = 3;
+
+  async function postCommentWithRetry(name, text, retryCount = 0) {
+    try {
+        const payload = { name: name, text: text };
+        
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            if (response.status === 500) {
+                if (retryCount < MAX_RETRIES) {
+                    return postCommentWithRetry(name, text, retryCount + 1);
+                }
+                throw new Error('Сервер не отвечает, попробуй позже');
+            }
+
+            if (response.status === 400) {
+                let serverMsg = 'Имя и комментарий должны быть не короче 3 символов';
+                try {
+                    const errData = await response.json();
+                    if (errData.message) serverMsg = errData.message;
+                    if (errData.error) serverMsg = errData.error;
+                } catch (e) {
+                }
+                throw new Error(serverMsg);
+            }
+
+            throw new Error(`Ошибка сервера: ${response.status}`);
+        }
+        
+        return await response.json();
+    } catch (error) {
+        if (error instanceof TypeError) {
+            throw new Error('Кажется, у вас сломался интернет, попробуйте позже');
+        }
+        if (error.message.includes('500') && retryCount < MAX_RETRIES) {
+            return postCommentWithRetry(name, text, retryCount + 1);
+        }
+        throw error;
+    }
+}
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -75,18 +141,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const text = (textInput.value || '').trim();
 
     if (!name || name.length < 3) {
-      alert('Имя должно содержать минимум 3 символа!');
+      alert('Имя и комментарий должны быть не короче 3 символов');
       return;
     }
-    if (!text) {
-      alert('Текст комментария обязателен!');
+    if (!text || text.length < 3) {
+      alert('Имя и комментарий должны быть не короче 3 символов');
       return;
     }
-
-    const payload = {
-      username: name,
-      text: text
-    };
 
     const btn = form.querySelector('button[type="submit"]') || form.querySelector('.add-form-button');
     const originalText = btn ? btn.textContent : 'Отправить';
@@ -101,32 +162,8 @@ document.addEventListener('DOMContentLoaded', () => {
     statusMsg.textContent = 'Отправка...';
 
     try {
-      const response = await fetch(API_URL, {
-        method: 'POST',
-        // ИСПРАВЛЕНИЕ: Заголовок обязателен для JSON!
-        headers: { 'Content-Type': 'application/json' }, 
-        body: JSON.stringify(payload)
-      });
-
-      if (!response.ok) {
-        let errorMsg = `Ошибка сервера: ${response.status}`;
-        try {
-          const errData = await response.json();
-          if (errData.message) errorMsg = errData.message;
-          if (errData.error) errorMsg = errData.error;
-        } catch (e) {
-           // Если сервер вернул HTML вместо JSON при ошибке
-           errorMsg = `Сервер вернул ошибку формата. Код: ${response.status}`;
-        }
-        throw new Error(errorMsg);
-      }
-
-      const newComment = await response.json();
+      const newComment = await postCommentWithRetry(name, text, 0);
       
-      // Нормализация полей (на случай если сервер вернет body вместо text)
-      if (newComment.body && !newComment.text) {
-          newComment.text = newComment.body;
-      }
       if (!newComment.date) newComment.date = new Date();
       
       renderComment(newComment);
@@ -140,7 +177,8 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (error) {
       console.error('Ошибка отправки:', error);
       statusMsg.textContent = `Ошибка: ${error.message}`;
-      statusMsg.style.color = '#f44336';
+      statusMsg.style.color = '#f44336'; 
+      
     } finally {
       setTimeout(() => {
         statusMsg.remove();
