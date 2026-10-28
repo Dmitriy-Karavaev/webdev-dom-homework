@@ -1,216 +1,193 @@
 document.addEventListener('DOMContentLoaded', () => {
-  const API_URL = 'https://wedev-api.sky.pro/api/v1/Dmitriy-Karavaev/comments';
-  const form = document.getElementById('commentForm');
-  const nameInput = document.querySelector('.add-form-name');
-  const textInput = document.querySelector('.add-form-text');
-  const commentsList = document.querySelector('.comments');
-  
-  if (!form || !nameInput || !textInput || !commentsList) {
-    console.error('Элементы не найдены');
-    return;
-  }
+    const API_URL = 'https://wedev-api.sky.pro/api/v1/Dmitriy-Karavaev';
+    const appContainer = document.getElementById('app'); // Ищем контейнер в HTML
 
-  function escapeHtml(str) {
-    if (!str) return '';
-    return str
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#39;');
-  }
-
-  function renderComment(comment) {
-  const li = document.createElement('li');
-  li.className = 'comment';
-
-  const commentName = (comment.name && comment.name.trim() !== '')
-    ? comment.name
-    : (comment.author && comment.author.name && comment.author.name.trim() !== '')
-      ? comment.author.name
-      : 'Аноним';
-
-  const commentText = (comment.text && comment.text.trim() !== '')
-    ? comment.text
-    : (comment.body && comment.body.trim() !== '')
-      ? comment.body
-      : '';
-
-  const dateStr = new Date(comment.date || Date.now()).toLocaleString();
-
-  li.innerHTML = `
-    <div class="comment-header">
-      <span>${escapeHtml(commentName)}</span>
-      <span>${dateStr}</span>
-    </div>
-    <div class="comment-body">
-      <div class="comment-text">${escapeHtml(commentText)}</div>
-    </div>
-    <div class="comment-footer">
-      <div class="likes">
-        <span class="likes-counter">0</span>
-        <button type="button" class="like-button" aria-label="Лайк"></button>
-      </div>
-    </div>
-  `;
-  li.dataset.commentId = comment.id;
-  commentsList.appendChild(li);
-}
-
-  async function loadComments() {
-    commentsList.innerHTML = '<li style="color:#aaa; text-align:center; padding:20px;">Загрузка...</li>';
-    try {
-      const response = await fetch(API_URL);
-      if (!response.ok) {
-        if (response.status === 500) {
-          alert('Сервер не отвечает, попробуй позже');
-        } else if (response.status === 400) {
-          alert('Некорректный запрос к API');
-        }
-        throw new Error(`HTTP ${response.status}`);
-      }
-      
-      const data = await response.json();
-      let comments = '';
-
-      if (Array.isArray(data)) comments = data;
-      else if (data && Array.isArray(data.data)) comments = data.data;
-      else if (data && Array.isArray(data.comments)) comments = data.comments;
-
-      commentsList.innerHTML = '';
-      comments.forEach(renderComment);
-    } catch (err) {
-      if (err instanceof TypeError) {
-        alert('Кажется, у вас отсутствует интернет, попробуйте позже');
-      } else {
-        console.error(err);
-        commentsList.innerHTML = '<li style="color:red; text-align:center; padding:20px;">Ошибка загрузки</li>';
-      }
+    if (!appContainer) {
+        console.error('Контейнер #app не найден в HTML. Добавьте <div id="app"></div> в body.');
+        return;
     }
-  }
 
-  const MAX_RETRIES = 3;
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>"']/g, c => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+        })[c]);
+    }
 
-  async function postCommentWithRetry(name, text, retryCount = 0) {
-    try {
-        const payload = { name: name, text: text };
+    async function authFetch(url, options = {}) {
+        const token = localStorage.getItem('token');
+        const headers = new Headers(options.headers);
+        if (token) headers.set('Authorization', `Bearer ${token}`);
+        const res = await fetch(url, { ...options, headers });
         
-        const response = await fetch(API_URL, {
-            method: 'POST',
-            body: JSON.stringify(payload)
-        });
+        if (res.status === 401) {
+            localStorage.removeItem('token');
+            window.location.href = '/login';
+            throw new Error('Сессия истекла');
+        }
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err.message || `Ошибка ${res.status}`);
+        }
+        return res;
+    }
 
-        if (!response.ok) {
-            if (response.status === 500) {
-                if (retryCount < MAX_RETRIES) {
-                    return postCommentWithRetry(name, text, retryCount + 1);
-                }
-                throw new Error('Сервер не отвечает, попробуй позже');
-            }
+    async function getUserProfile() {
+        const res = await authFetch(`${API_URL}/profile`);
+        return res.json();
+    }
 
-            if (response.status === 400) {
-                let serverMsg = 'Имя и комментарий должны быть не короче 3 символов';
+    async function loadComments() {
+        try {
+            const res = await fetch(`${API_URL}/comments`);
+            if (!res.ok) throw new Error('Не удалось загрузить комментарии');
+            const data = await res.json();
+            return Array.isArray(data) ? data : (data.comments || '');
+        } catch (err) {
+            console.error('Ошибка загрузки комментариев:', err);
+            return ;
+        }
+    }
+
+    function renderLoginPage() {
+        document.body.innerHTML = `
+            <div class="login-container">
+                <h2>Авторизация</h2>
+                <form id="loginForm">
+                    <input id="email" type="email" placeholder="Email" required>
+                    <input id="password" type="password" placeholder="Пароль" required>
+                    <button type="submit">Войти</button>
+                    <div id="error" style="color:red"></div>
+                </form>
+            </div>
+        `;
+
+        const form = document.getElementById('loginForm');
+        if (form) {
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const email = document.getElementById('email').value.trim();
+                const password = document.getElementById('password').value.trim();
+                const errorEl = document.getElementById('error');
+                errorEl.textContent = '';
+
                 try {
-                    const errData = await response.json();
-                    if (errData.message) serverMsg = errData.message;
-                    if (errData.error) serverMsg = errData.error;
-                } catch (e) {
+                    const res = await fetch(`${API_URL}/login`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email, password })
+                    });
+
+                    if (!res.ok) {
+                        const err = await res.json();
+                        throw new Error(err.message || 'Неверный логин или пароль');
+                    }
+
+                    const { token } = await res.json();
+                    localStorage.setItem('token', token);
+                    window.location.href = '/';
+                } catch (err) {
+                    errorEl.textContent = err.message;
                 }
-                throw new Error(serverMsg);
+            });
+        }
+    }
+
+    function renderFeedPage(comments, isAuth, user) {
+        const formHtml = isAuth && user
+            ? `
+                <div class="comment-form">
+                    <form id="commentForm">
+                        <input type="text" value="${escapeHtml(user.name)}" readonly>
+                        <textarea id="text" placeholder="Ваш комментарий" required></textarea>
+                        <button type="submit">Написать</button>
+                    </form>
+                </div>
+              `
+            : `
+                <div class="login-link">
+                    <p>Чтобы добавить комментарий, <a href="/login">авторизуйтесь</a></p>
+                </div>
+              `;
+
+        const commentsHtml = comments.map(c => `
+            <li class="comment">
+                <div class="comment-header">
+                    <span>${escapeHtml(c.name)}</span>
+                    <span>${new Date(c.date).toLocaleString()}</span>
+                </div>
+                <div class="comment-body">
+                    <p>${escapeHtml(c.text)}</p>
+                </div>
+                <div class="comment-footer">
+                    <div class="likes">
+                        <span class="likes-counter">0</span>
+                        <button type="button" class="like-button" aria-label="Лайк"></button>
+                    </div>
+                </div>
+            </li>
+        `).join('');
+
+        appContainer.innerHTML = `
+            <div class="comments-container">
+                <h1>Лента комментариев</h1>
+                <ul class="comments" id="comments-list">
+                    ${commentsHtml}
+                </ul>
+                ${formHtml}
+            </div>
+        `;
+
+        // Навешиваем обработчик отправки формы ТОЛЬКО если пользователь авторизован
+        if (isAuth && user) {
+            const form = document.getElementById('commentForm');
+            if (form) {
+                form.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const text = document.getElementById('text').value.trim();
+
+                    if (text.length < 3) {
+                        alert('Комментарий должен содержать минимум 3 символа!');
+                        return;
+                    }
+
+                    try {
+                        await authFetch(`${API_URL}/comments`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ name: user.name, text })
+                        });
+
+                        window.location.reload();
+                    } catch (err) {
+                        alert(err.message);
+                    }
+                });
+            }
+        }
+    }
+
+    async function init() {
+        const path = window.location.pathname;
+        
+        if (path === '/login') {
+            renderLoginPage();
+        } else {
+            const isAuth = !!localStorage.getItem('token');
+            let user = null;
+
+            if (isAuth) {
+                try {
+                    user = await getUserProfile();
+                } catch (error) {
+                    console.error('Ошибка получения профиля:', error);
+                }
             }
 
-            throw new Error(`Ошибка сервера: ${response.status}`);
+            const comments = await loadComments();
+            renderFeedPage(comments, isAuth, user);
         }
-        
-        return await response.json();
-    } catch (error) {
-        if (error instanceof TypeError) {
-            throw new Error('Кажется, у вас сломался интернет, попробуйте позже');
-        }
-        if (error.message.includes('500') && retryCount < MAX_RETRIES) {
-            return postCommentWithRetry(name, text, retryCount + 1);
-        }
-        throw error;
-    }
-}
-
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    
-    let name = (nameInput.value || '').trim();
-    const text = (textInput.value || '').trim();
-
-    if (!name || name.length < 3) {
-      alert('Имя и комментарий должны быть не короче 3 символов');
-      return;
-    }
-    if (!text || text.length < 3) {
-      alert('Имя и комментарий должны быть не короче 3 символов');
-      return;
     }
 
-    const btn = form.querySelector('button[type="submit"]') || form.querySelector('.add-form-button');
-    const originalText = btn ? btn.textContent : 'Отправить';
-    
-    if(btn) btn.disabled = true;
-    form.style.display = 'none';
-    
-    const statusMsg = document.createElement('div');
-    statusMsg.id = 'status-msg';
-    statusMsg.style.cssText = 'color:#bcec30; font-size:24px; padding:20px; text-align:center;';
-    form.parentNode.insertBefore(statusMsg, form);
-    statusMsg.textContent = 'Отправка...';
-
-    try {
-      const newComment = await postCommentWithRetry(name, text, 0);
-      
-      if (!newComment.date) newComment.date = new Date();
-      
-      renderComment(newComment);
-      
-      nameInput.value = '';
-      textInput.value = '';
-      
-      statusMsg.textContent = 'Комментарий добавлен!';
-      statusMsg.style.color = '#4caf50';
-      
-    } catch (error) {
-      console.error('Ошибка отправки:', error);
-      statusMsg.textContent = `Ошибка: ${error.message}`;
-      statusMsg.style.color = '#f44336'; 
-      
-    } finally {
-      setTimeout(() => {
-        statusMsg.remove();
-        form.style.display = 'flex'; 
-        if(btn) {
-          btn.disabled = false;
-          btn.textContent = originalText;
-        }
-      }, 3000);
-    }
-  });
-
-  commentsList.addEventListener('click', (e) => {
-    const likeBtn = e.target.closest('.like-button');
-    if (!likeBtn) return;
-    
-    const counter = likeBtn.parentElement.querySelector('.likes-counter');
-    if (!counter) return;
-
-    const isLiked = likeBtn.classList.contains('-active-like');
-    const currentCount = parseInt(counter.textContent, 10) || 0;
-
-    if (isLiked) {
-      likeBtn.classList.remove('-active-like');
-      likeBtn.setAttribute('aria-pressed', 'false');
-      counter.textContent = Math.max(0, currentCount - 1);
-    } else {
-      likeBtn.classList.add('-active-like');
-      likeBtn.setAttribute('aria-pressed', 'true');
-      counter.textContent = currentCount + 1;
-    }
-  });
-
-  loadComments();
+    init();
 });
