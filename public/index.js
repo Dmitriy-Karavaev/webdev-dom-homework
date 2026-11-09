@@ -1,30 +1,27 @@
 import { renderLoginPage, renderFeedPage } from './render.js';
-import { getUserProfile, loadComments } from './api.js';
+import { loadComments } from './api.js';
 
 async function init() {
-  const path = window.location.pathname;
-
-  if (path === '/login' || path === '/login.html') {
+  if (window.location.hash === '#/login') {
     renderLoginPage();
-    return; 
+    return;
   }
 
-  let isAuth = !!localStorage.getItem('token');
+  const token = localStorage.getItem('token');
   let user = null;
 
-  if (isAuth) {
+  if (token) {
     try {
-      user = await getUserProfile();
-    } catch (error) {
-      console.error('Ошибка получения профиля:', error);
-      localStorage.removeItem('token');
-      isAuth = false;
+      user = JSON.parse(localStorage.getItem('user') || 'null');
+    } catch (e) {
       user = null;
     }
   }
 
   const comments = await loadComments();
-  renderFeedPage(comments, isAuth, user);
+  renderFeedPage(comments, Boolean(token && user), user);
 }
 
 init();
+
+window.addEventListener('hashchange', init);
