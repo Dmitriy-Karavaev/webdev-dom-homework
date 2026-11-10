@@ -182,63 +182,83 @@ body {
   text-decoration: underline;
 }
 
+/* --- ПЕРЕПИСАННЫЕ стили для формы авторизации --- */
 .login-container {
   max-width: 400px;
   margin: 40px auto;
-  padding: 24px;
+  padding: 32px; /* Чуть больше внутренний отступ контейнера */
   background: linear-gradient(135deg, #8e44ad 0%, #5e3370 100%);
   color: #fff;
   border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
 }
 
 .login-container h2 {
   text-align: center;
   margin-top: 0;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
   color: #fff;
+  font-size: 24px;
 }
 
 .login-container form {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 18px; /* Увеличенный отступ между полями ввода */
 }
 
-.login-container input[type="email"],
+/* Применяем стили ко всем текстовым полям внутри формы авторизации */
+.login-container input[type="text"],
 .login-container input[type="password"] {
-  padding: 12px;
+  padding: 16px 20px; /* Крупные внутренние отступы делают поле визуально больше */
   border-radius: 8px;
   border: none;
-  font-size: 1rem;
+  font-size: 18px; /* Увеличенный шрифт для лучшей читаемости */
   color: #333;
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.15);
+  background-color: #ffffff; /* Белый фон для контраста с темным контейнером */
+  box-sizing: border-box;
 }
 
 .login-container input::placeholder {
-  color: #aaa;
+  color: #999;
+  opacity: 1;
+}
+
+.login-container input:focus {
+  outline: none;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.15), 0 0 0 3px rgba(255, 255, 255, 0.3);
 }
 
 .login-container button[type="submit"] {
-  padding: 12px;
-  background-color: #fff;
+  padding: 16px;
+  background-color: #ffffff;
   color: #8e44ad;
   border: none;
   border-radius: 8px;
-  font-weight: 600;
+  font-weight: 700;
+  font-size: 18px;
   cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .login-container button[type="submit"]:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+  background-color: #f0f0f0;
+}
+
+.login-container button[type="submit"]:active {
+  transform: translateY(0);
 }
 
 .login-container #error {
   text-align: center;
-  margin-top: 12px;
-  font-size: 0.94rem;
+  margin-top: 16px;
+  font-size: 1rem;
+  color: #ffcccc;
+  min-height: 1.2em;
 }
 
 /* --- Адаптив --- */
@@ -252,35 +272,34 @@ body {
   .add-form,
   .comment-form,
   .login-container {
-    width: calc(100% - 32px); /* Отступы по краям */
+    width: calc(100% - 32px);
     box-sizing: border-box;
   }
 
   .add-form-name,
   .comment-form input[type="text"] {
-    width: 100%; /* На мобильном имя на всю ширину */
+    width: 100%;
   }
   
   .add-form-button,
   .comment-form button {
-    width: 100%; /* Кнопка на всю ширину на мобильном */
+    width: 100%;
     align-self: stretch;
   }
 }
 
 .guest-card {
-  width: 85%; /* На 15% меньше ширины родителя (100% - 15%) */
-  margin: 40px auto 0; /* Отступ сверху и центрирование */
+  width: 85%;
+  margin: 40px auto 0;
   padding: 20px;
-  background: linear-gradient(135deg, #6a5ac4 0%, #4b0082 100%); /* Тот же фиолетовый градиент */
-  border-radius: 24px; /* Тот же радиус скругления, что и у комментариев */
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); /* Легкая тень для объема */
+  background: linear-gradient(135deg, #6a5ac4 0%, #4b0082 100%);
+  border-radius: 24px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
   text-align: center;
   color: #fff;
   font-family: inherit;
 }
 
-/* Текст внутри карточки */
 .guest-text {
   margin: 0 0 15px 0;
   font-size: 1rem;
@@ -288,7 +307,6 @@ body {
   opacity: 0.9;
 }
 
-/* Кнопка "Войти" */
 .guest-card .login-btn {
   background-color: #98ff47;
   color: #1100ff;
@@ -303,4 +321,31 @@ body {
 .guest-card .login-btn:hover {
   transform: scale(1.05);
   box-shadow: 0 5px 15px rgba(255, 71, 87, 0.4);
+}
+
+.form-error {
+  color: #ffcccc;
+  text-align: center;
+  min-height: 1.2em;
+  margin-top: 4px;
+}
+
+.feed-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.logout-btn {
+  padding: 8px 16px;
+  border: 1px solid #999;
+  border-radius: 20px;
+  background: transparent;
+  color: #fff;
+  cursor: pointer;
+}
+
+.logout-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
 }
