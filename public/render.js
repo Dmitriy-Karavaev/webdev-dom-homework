@@ -1,5 +1,5 @@
 import { escapeHtml } from './utils.js';
-import { login, register, authFetch, toggleLike, API_URL } from './api.js';
+import { login, register, authFetch, toggleLike, loadComments, API_URL } from './api.js';
 
 export function renderLoginPage() {
   const app = document.getElementById('app');
@@ -43,7 +43,6 @@ export function renderLoginPage() {
       ? 'Уже есть аккаунт? Войти'
       : 'Нет аккаунта? Зарегистрироваться';
   });
-
   // --- Вход ---
   loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -62,7 +61,6 @@ export function renderLoginPage() {
       errorEl.textContent = err.message;
     }
   });
-
   // --- Регистрация ---
   registerForm.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -163,7 +161,6 @@ export function renderFeedPage(comments, isAuth, user) {
       ${formHtml}
     </div>
   `;
-
   // --- Форма комментария или кнопка входа ---
   if (isAuth && user) {
     const form = document.getElementById('commentForm');
@@ -177,14 +174,27 @@ export function renderFeedPage(comments, isAuth, user) {
           return;
         }
 
+        const submitBtn = form.querySelector('button[type="submit"]');
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.textContent = 'Отправляю...';
+        }
+
         try {
           await authFetch(`${API_URL}/comments`, {
             method: 'POST',
             body: JSON.stringify({ name: user.name, text })
           });
-          window.location.reload();
+
+          // Вместо reload: GET за актуальными комментариями и перерисовка
+          const freshComments = await loadComments();
+          renderFeedPage(freshComments, isAuth, user);
         } catch (err) {
           alert(err.message);
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Написать';
+          }
         }
       });
     }
@@ -200,7 +210,7 @@ export function renderFeedPage(comments, isAuth, user) {
   // --- Лайки ---
   const commentsContainer = document.getElementById('comments-list');
   if (commentsContainer) {
-    commentsContainer.addEventListener('click', (e) => {
+    commentsContainer.addEventListener('click', async (e) => {
       const btn = e.target.closest('.like-button');
       if (!btn) return;
 
@@ -209,9 +219,6 @@ export function renderFeedPage(comments, isAuth, user) {
 
       const id = Number(commentEl.dataset.id);
       if (!id) return;
-
-      const counter = commentEl.querySelector('.likes-counter');
-      if (!counter) return;
 
       const likedIds = JSON.parse(localStorage.getItem('likedComments') || '[]');
       const idx = likedIds.indexOf(id);
@@ -223,13 +230,20 @@ export function renderFeedPage(comments, isAuth, user) {
       }
       localStorage.setItem('likedComments', JSON.stringify(likedIds));
 
-      const baseLikes = Number(commentEl.dataset.likes) || 0;
-      const liked = idx === -1;
-      counter.textContent = baseLikes + (liked ? 1 : 0);
-      btn.classList.toggle('-active-like', liked);
+      btn.classList.toggle('-active-like', idx === -1);
+
+      btn.disabled = true;
+
+      try {
+        await toggleLike(id);
+        const freshComments = await loadComments();
+        renderFeedPage(freshComments, isAuth, user);
+      } catch (err) {
+        console.error('Ошибка лайка:', err);
+        btn.disabled = false;
+      }
     });
   }
-
   // --- Выход из аккаунта ---
   const logoutBtn = document.getElementById('logout-btn');
   if (logoutBtn) {

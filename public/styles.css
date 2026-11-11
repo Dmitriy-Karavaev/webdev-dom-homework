@@ -124,16 +124,20 @@ body {
 
 .add-form-name,
 .comment-form input[type="text"] {
-  width: 60%;
+  width: 100%;
   max-width: 100%;
   padding: 11px 22px;
 }
 
-.add-form-text,
-.comment-form textarea {
-  padding: 22px;
-  resize: none;
+.add-form,
+.comment-form {
+  padding: 20px;
+  margin-top: 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px; 
   width: 100%;
+  box-sizing: border-box;
 }
 
 .add-form-button,
@@ -261,6 +265,19 @@ body {
   min-height: 1.2em;
 }
 
+.comment-form form,
+.add-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.comment-form input,
+.comment-form textarea,
+.comment-form button {
+  margin: 0;
+}
+
 /* --- Адаптив --- */
 @media (max-width: 600px) {
   .container {
@@ -276,6 +293,12 @@ body {
     box-sizing: border-box;
   }
 
+  /* На мобильных gap: 16px уже достаточно, но можно чуть увеличить */
+  .add-form,
+  .comment-form {
+    gap: 20px;
+  }
+
   .add-form-name,
   .comment-form input[type="text"] {
     width: 100%;
@@ -286,6 +309,10 @@ body {
     width: 100%;
     align-self: stretch;
   }
+}
+
+.comment-form textarea {
+  margin-bottom: 12px;
 }
 
 .guest-card {
@@ -315,7 +342,7 @@ body {
   border-radius: 50px; 
   cursor: pointer;
   font-weight: 600;
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition: transform 0.3s, box-shadow 0.2s;
 }
 
 .guest-card .login-btn:hover {
